@@ -1,0 +1,55 @@
+apply plugin: 'com.android.library'
+//发布到本地
+apply plugin: 'maven'
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    compileOnly('com.squareup.okhttp3:okhttp:3.12.0')
+    //    implementation 'com.google.android.gms:play-services-cronet:17.0.0'
+    api "org.chromium.net:cronet-fallback:76.3809.111"
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories {
+        mavenDeployer {
+            // 仓库路径（只能是hosted仓库）
+            repository(url: 'http://10.1.9.109:8081/repository/android-maven-hosted/') {
+                // 你 Nexus 的账户密码
+                authentication(userName: 'androidVisitors', password: 'androidVisitors@123')
+            }
+            pom.project {
+                version '1.0.1'
+                artifactId 'plugin'
+                groupId 'com.leimans.cronet2okhttp'
+                description '在Okhttp中使用使用cronet库'
+            }
+        }
+    }
+}

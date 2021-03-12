@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path
+        name="my_images"
+        path="Pictures"/>
+
+    <external-files-path
+        name="cache_download"
+        path="download" />
+
+    <external-cache-path
+        name="take_photo_gallery_final"
+        path="/" />
+
+    <root-path
+        name="take_photo"
+        path="/" />
+
+</paths>

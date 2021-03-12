@@ -1,0 +1,49 @@
+apply plugin: 'com.android.library'
+//发布到本地
+apply plugin: 'maven'
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories {
+        mavenDeployer {
+            // 仓库路径（只能是hosted仓库）
+            repository(url: 'http://10.1.9.109:8081/repository/android-maven-hosted/') {
+                // 你 Nexus 的账户密码
+                authentication(userName: 'androidVisitors', password: 'androidVisitors@123')
+            }
+            pom.project {
+                version '1.0.1'
+                artifactId 'plugin'
+                groupId 'com.leimans.imcronetlib'
+                description 'im项目使用的cronetlib库'
+            }
+        }
+    }
+}
