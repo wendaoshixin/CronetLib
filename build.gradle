@@ -16,6 +16,9 @@ allprojects {
     repositories {
         google()
         jcenter()
+
+        //公司私有maven
+        maven {url 'http://10.1.9.109:8081/repository/android-maven-group/'}
     }
 }
 

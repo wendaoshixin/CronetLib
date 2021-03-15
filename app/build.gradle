@@ -20,17 +20,30 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation project(path: ':okhttp_cronet')
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+
+
+    //项目依赖
+   // implementation project(path: ':okhttp_cronet')
+    //私有仓库地址依赖
+    implementation 'com.leimans.lib:cronet2okhttp:1.0.1@aar'
+    implementation 'com.leimans.lib:imcronet:1.0.2@aar'
+    //替换成google自带的库
+    implementation "org.chromium.net:cronet-fallback:76.3809.111"
 
 }

@@ -22,10 +22,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
+//    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+    api files('libs/cronet_api.jar')
+
+    api files('libs/cronet_impl_common_java.jar')
+
+    api files('libs/cronet_impl_native_java.jar')
 
 }
 
@@ -39,9 +49,9 @@ uploadArchives {
                 authentication(userName: 'androidVisitors', password: 'androidVisitors@123')
             }
             pom.project {
-                version '1.0.1'
-                artifactId 'plugin'
-                groupId 'com.leimans.imcronetlib'
+                version '1.0.2'
+                artifactId 'imcronet'
+                groupId 'com.leimans.lib'
                 description 'im项目使用的cronetlib库'
             }
         }
