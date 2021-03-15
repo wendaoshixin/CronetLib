@@ -49,7 +49,7 @@ uploadArchives {
                 authentication(userName: 'androidVisitors', password: 'androidVisitors@123')
             }
             pom.project {
-                version '1.0.1'
+                version '1.0.2'
                 artifactId 'cronet2okhttp'
                 groupId 'com.leimans.lib'
                 description '在Okhttp中使用使用cronet库'

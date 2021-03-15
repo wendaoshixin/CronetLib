@@ -39,11 +39,11 @@ dependencies {
 
 
     //项目依赖
-   // implementation project(path: ':okhttp_cronet')
+//    implementation project(path: ':okhttp_cronet')
     //私有仓库地址依赖
-    implementation 'com.leimans.lib:cronet2okhttp:1.0.1@aar'
+    implementation 'com.leimans.lib:cronet2okhttp:1.0.2@aar'
     implementation 'com.leimans.lib:imcronet:1.0.2@aar'
     //替换成google自带的库
-    implementation "org.chromium.net:cronet-fallback:76.3809.111"
+//    implementation "org.chromium.net:cronet-fallback:76.3809.111"
 
 }

@@ -9,8 +9,8 @@ import android.view.View;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.leimans.lib.okhtpp.intercept.CronetHelper;
-import com.leimans.lib.okhtpp.intercept.CronetInterceptor;
+import com.leimans.lib.okhttp.intercept.CronetHelper;
+import com.leimans.lib.okhttp.intercept.CronetInterceptor;
 
 import java.io.File;
 import java.io.IOException;
