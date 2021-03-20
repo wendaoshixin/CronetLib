@@ -1,8 +1,6 @@
 package com.leimans.lib.okhttp.intercept;
 
 
-import android.text.TextUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,21 +33,24 @@ public class CronetInterceptor implements Interceptor {
         }
 
         Request req = chain.request();
-
         URL url = req.url().url();
-        if(!TextUtils.equals("dev-file-im.raymannet.com", url.getHost())){
+//        if(!TextUtils.equals("dev-file-im.raymannet.com", url.getHost())){
+//            return chain.proceed(chain.request());
+//        }
+
+        if (CronetHelper.getInstance().getRequestFilter() != null
+                && !CronetHelper.getInstance().getRequestFilter().filter(req)) {
             return chain.proceed(chain.request());
         }
 
-
         // covert okhttp request to cornet request
-        HttpURLConnection connection = (HttpURLConnection)CronetHelper.getInstance().getCronetEngine().openConnection(url);
+        HttpURLConnection connection = (HttpURLConnection) CronetHelper.getInstance().getCronetEngine().openConnection(url);
 //        connection.
-        connection.setChunkedStreamingMode(4096);
+        connection.setChunkedStreamingMode(CronetHelper.DEFAULT_CHUNKED_LEN);
         // add headers
         Set<String> headerlist = req.headers().names();
 
-        for(String headerName : headerlist){
+        for (String headerName : headerlist) {
             connection.addRequestProperty(headerName, req.headers().get(headerName));
         }
 
@@ -58,14 +59,15 @@ public class CronetInterceptor implements Interceptor {
         connection.setRequestMethod(req.method());
 
         // add body
-        if(req.body() != null){
-            RequestBody requestBody= req.body();
-            if(requestBody.contentType() != null){
+        if (req.body() != null) {
+            RequestBody requestBody = req.body();
+            if (requestBody.contentType() != null) {
                 connection.setRequestProperty("Content-Type", requestBody.contentType().toString());
             }
 
             connection.setDoOutput(true);
             OutputStream os = connection.getOutputStream();
+            os = new OutputStreamProxy(os, chain.call(), connection);
             BufferedSink sink = Okio.buffer(Okio.sink(os));
             requestBody.writeTo(sink);
             sink.flush();
@@ -76,52 +78,54 @@ public class CronetInterceptor implements Interceptor {
         int statusCode = connection.getResponseCode();
 
 //        printProtocol(connection);
-
-        // handling http redirect
-        if (statusCode>= 300 && statusCode<=310) {
-            return chain.proceed(req);
+        if(CronetHelper.getInstance().getPrintProtocol() != null){
+            CronetHelper.getInstance().getPrintProtocol().printProtocol(connection);
         }
 
-
+        // handling http redirect
+        if (statusCode >= 300 && statusCode <= 310) {
+            return chain.proceed(req);
+        }
 
         Response.Builder respBuilder = new Response.Builder();
         respBuilder
                 .request(req)
                 .protocol(Protocol.QUIC)
                 .code(statusCode)
-                .message(connection.getResponseMessage()== null?connection.getResponseMessage():"");
+                .message(connection.getResponseMessage() == null ? connection.getResponseMessage() : "");
 
         Map<String, List<String>> respHeaders = connection.getHeaderFields();
 
 
         for (Map.Entry<String, List<String>> stringListEntry : respHeaders.entrySet()) {
             for (String valueString : stringListEntry.getValue()) {
-                if(stringListEntry.getKey() != null){
+                if (stringListEntry.getKey() != null) {
                     respBuilder.addHeader(stringListEntry.getKey(), valueString);
                 }
             }
         }
 
         InputStream inputStream = null;
-        if(statusCode>=200 && statusCode <=399){
+        if (statusCode >= 200 && statusCode <= 399) {
             inputStream = connection.getInputStream();
-        }else {
+        } else {
             inputStream = connection.getErrorStream();
         }
 
+        inputStream = new InputStreamProxy(inputStream, chain.call(), connection);
         BufferedSource bodySource = Okio.buffer(Okio.source(inputStream));
 
 
         List<String> contentTypeList = respHeaders.get("Content-Type");
         List<String> contentLengthList = respHeaders.get("Content-Length");
-        String contentTypeString ="";
+        String contentTypeString = "";
         long contentLength = 0;
-        if(contentTypeList !=null && contentTypeList.size()>0){
-            contentTypeString = contentTypeList.get(contentTypeList.size()-1);
+        if (contentTypeList != null && contentTypeList.size() > 0) {
+            contentTypeString = contentTypeList.get(contentTypeList.size() - 1);
         }
 
-        if(contentLengthList !=null && contentLengthList.size()>0){
-            contentLength = Long.parseLong(contentLengthList.get(contentLengthList.size()-1));
+        if (contentLengthList != null && contentLengthList.size() > 0) {
+            contentLength = Long.parseLong(contentLengthList.get(contentLengthList.size() - 1));
         }
 
         RealResponseBody realResponseBody = new RealResponseBody(contentTypeString, contentLength, bodySource);

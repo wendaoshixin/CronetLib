@@ -3,6 +3,8 @@ package com.leimans.lib.cronetlib;
 import android.Manifest;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
@@ -11,9 +13,18 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.leimans.lib.okhttp.intercept.CronetHelper;
 import com.leimans.lib.okhttp.intercept.CronetInterceptor;
+import com.leimans.lib.okhttp.intercept.CronetRequestFilter;
+
+import org.chromium.net.UrlResponseInfo;
+import org.chromium.net.urlconnection.CronetHttpURLConnection;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -34,6 +45,7 @@ import okio.BufferedSource;
 
 public class MainActivity extends AppCompatActivity {
     OkHttpClient mOkhttpClentWithQUIC;
+    private Call mRealCall;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +62,34 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkPermissions();
         }
-        CronetHelper.getInstance().init(this.getApplicationContext());
+        CronetHelper.getInstance().init(this.getApplicationContext()).setPrintProtocol(new CronetHelper.IPrintProtocol() {
+            @Override
+            public void printProtocol(URLConnection urlConnection) {
+                try {
+                    Class<CronetHttpURLConnection> classz = (Class<CronetHttpURLConnection>) urlConnection.getClass();
+                    Field field = classz.getDeclaredField("mResponseInfo");
+                    field.setAccessible(true);
+                    UrlResponseInfo urlResponseInfo = (UrlResponseInfo) field.get(urlConnection);
+                    String protocol = urlResponseInfo.getNegotiatedProtocol();
+
+                    //打印联网协议
+                    Log.d(CronetHelper.TAG, "协议: " + protocol);
+
+                } catch (Exception e) {
+                    Log.d(CronetHelper.TAG, "协议: " + e);
+                }
+            }
+        }).setRequestFilter(new CronetRequestFilter() {
+            @Override
+            public boolean filter(Request request) {
+                URL url = request.url().url();
+                //只有文件域名使用，cronet协议
+                if(!TextUtils.equals("dev-file-im.raymannet.com", url.getHost())){
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -182,30 +221,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * 测试原始OKhttp3网络请求
-     * @param view
-     */
-    public void okhttpQUICTest2(View view) {
-        String url = "http://wwww.baidu.com";
-        OkHttpClient okHttpClient = new OkHttpClient();
-        final Request request = new Request.Builder()
-                .url(url)
-                .get()//默认就是GET请求，可以不写
-                .build();
-        Call call = okHttpClient.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.d(CronetHelper.TAG, "onFailure: ");
-            }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                Log.d(CronetHelper.TAG, "onResponse: " + response.body().string());
-            }
-        });
-    }
 
     /**
      * 使用okhttp上传
@@ -273,6 +289,88 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    /**
+     * 测试原始OKhttp3网络请求，下载取消测试
+     * @param view
+     */
+    public void okhttpDownloadTest(View view) {
+        if(mRealCall == null){
+            //String url = "http://wwww.baidu.com";
+            String url = "https://dldir1.qq.com/weixin/android/weixin801android1840_arm64.apk";
+            OkHttpClient okHttpClient = mOkhttpClentWithQUIC;
+            final Request request = new Request.Builder()
+                    .url(url)
+                    .get()//默认就是GET请求，可以不写
+                    .build();
+
+            mRealCall = okHttpClient.newCall(request);
+            mRealCall.enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Log.d(CronetHelper.TAG, "onFailure: "+e);
+                    mRealCall = null;
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    Log.d(CronetHelper.TAG, "onResponse: " + response.body().contentLength());
+
+                    InputStream is = null;
+                    byte[] buf = new byte[102400];
+                    int len = 0;
+                    FileOutputStream fos = null;
+
+                    String destFileDir = Environment.getExternalStorageDirectory().getAbsolutePath();
+                    String destFileName = "fengli.apk";
+                    //储存下载文件的目录
+                    File dir = new File(destFileDir);
+                    if (!dir.exists()) {
+                        dir.mkdirs();
+                    }
+
+                    File file = new File(dir, destFileName);
+
+                    try {
+
+                        is = response.body().byteStream();
+                        long total = response.body().contentLength();
+                        fos = new FileOutputStream(file);
+                        long sum = 0;
+                        while ((len = is.read(buf)) != -1) {
+                            fos.write(buf, 0, len);
+                            sum += len;
+                            int progress = (int) (sum * 1.0f / total * 100);
+                            //下载中更新进度条
+//                            listener.onDownloading(progress);
+                        }
+                        fos.flush();
+                        //下载完成
+//                        listener.onDownloadSuccess(file);
+                    } catch (Exception e) {
+                        Log.d(CronetHelper.TAG, "IOException: " + e);
+//                        listener.onDownloadFailed(e);
+                    }finally {
+                        Log.d(CronetHelper.TAG, "finally: ");
+                        try {
+                            if (is != null) {
+                                is.close();
+                            }
+                            if (fos != null) {
+                                fos.close();
+                            }
+                        } catch (IOException e) {
+
+                        }
+                    }
+                    mRealCall = null;
+                }
+            });
+        }else {
+            mRealCall.cancel();
+            mRealCall = null;
+        }
     }
 }
 
