@@ -84,10 +84,11 @@ public class MainActivity extends AppCompatActivity {
             public boolean filter(Request request) {
                 URL url = request.url().url();
                 //只有文件域名使用，cronet协议
-                if(!TextUtils.equals("dev-file-im.raymannet.com", url.getHost())){
-                    return true;
-                }
-                return false;
+//                if(!TextUtils.equals("dev-file-im.raymannet.com", url.getHost())){
+//                    return true;
+//                }
+//                return false;
+                return true;
             }
         });
     }

@@ -36,7 +36,7 @@ dependencies {
 //    api project(path: ':imcronetlib')
 
     //私有仓库地址
-    api 'com.leimans.lib:imcronet:1.0.2'
+    api 'com.leimans.lib:imcronet:1.0.3'
 }
 
 uploadArchives {

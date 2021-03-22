@@ -11,6 +11,11 @@ android {
         versionCode 1
         versionName "1.0"
 
+        ndk {
+            // 设置支持的SO库架构
+            abiFilters('armeabi-v7a','arm64-v8a','x86','x86_64')
+        }
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,7 +47,7 @@ dependencies {
 //    implementation project(path: ':okhttp_cronet')
     //私有仓库地址依赖
     implementation 'com.leimans.lib:cronet2okhttp:1.0.3@aar'
-    implementation 'com.leimans.lib:imcronet:1.0.2@aar'
+    implementation 'com.leimans.lib:imcronet:1.0.3@aar'
     //替换成google自带的库
 //    implementation "org.chromium.net:cronet-fallback:76.3809.111"
 
